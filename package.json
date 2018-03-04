@@ -1,0 +1,24 @@
+{
+  "name": "party-line",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.js",
+  "scripts": {
+    "watch": "watchify src/index.js -o public/bundle.js -dv",
+    "build": "browserify src/index.js -o public/bundle.js"
+  },
+  "author": "Jeff Sisson <jeff@bigboy.us> (https://bigboy.us/)",
+  "license": "ISC",
+  "dependencies": {
+    "browserify": "^16.1.0",
+    "choo": "^6.8.0",
+    "hyperlog": "^4.12.1",
+    "luxon": "^0.5.3",
+    "memdb": "^1.3.1",
+    "shasum": "^1.0.2",
+    "signalhub": "^4.9.0",
+    "subleveldown": "^2.1.0",
+    "watchify": "^3.10.0",
+    "webrtc-swarm": "^2.9.0"
+  }
+}
