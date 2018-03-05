@@ -24,7 +24,7 @@ function setupChat(state, emitter) {
             chat = null;
             emitter.removeAllListeners("newmsg");
         } else if (!chat && key && key.length) {
-            chat = new Chat(state.nym, memdb(), key);
+            chat = new Chat(state.nym, memdb(), key, window.HUBS);
             chat.on("peer", () => emitter.emit("peers", chat.peers));
             chat.on("disconnect", () => emitter.emit("peers", chat.peers));
             chat.on("say", row => emitter.emit("say", row));
@@ -95,8 +95,16 @@ function loginView(state, emit) {
         <form onsubmit=${onsubmit} class="enter-key">
             <img src="party-line.jpg">
             <input class="key" name="key" type="text" placeholder="enter chat key" autofocus>
+            <button onclick=${onclick}>(or generate a new chat)</button>
         </form>
     </body>`;
+
+    function onclick(e) {
+        e.preventDefault();
+        let key = new Buffer(32);
+        window.crypto.getRandomValues(key);
+        emit("pushState", `#${key.toString("hex")}`);
+    }
 
     function onsubmit(e) {
         e.preventDefault();

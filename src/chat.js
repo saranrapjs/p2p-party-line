@@ -3,15 +3,26 @@ let wswarm = require("webrtc-swarm");
 let signalhub = require("signalhub");
 let EventEmitter = require("events").EventEmitter;
 let sub = require("subleveldown");
-let shasum = require("shasum");
+let sodium = require("sodium-universal");
+
+function generateKey(input) {
+  var digest = new Buffer(32);
+  sodium.crypto_generichash(digest, input);
+  return digest.toString("hex");
+}
 
 class Chat extends EventEmitter {
-  constructor(name, db, channelName = "chat") {
+  constructor(
+    name,
+    db,
+    channelName = "chat",
+    hubs = ["https://signalhub.mafintosh.com/"]
+  ) {
     super();
     this.db = db;
     this.name = name;
     this.channelName = channelName;
-    this.hubs = ["https://signalhub.mafintosh.com/"];
+    this.hubs = hubs;
     this.log = hyperlog(sub(this.db, "chat"), {
       valueEncoding: "json"
     });
@@ -22,7 +33,7 @@ class Chat extends EventEmitter {
     this.log.createReadStream({ live: true }).on("data", row => {
       this.emit("say", row);
     });
-    let hub = signalhub(shasum(this.channelName), this.hubs);
+    let hub = signalhub(generateKey(this.channelName), this.hubs);
     this.swarm = wswarm(hub);
     this.onswarm = (peer, id) => {
       this.peers[id] = peer;
