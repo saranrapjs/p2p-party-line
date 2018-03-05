@@ -93,3 +93,16 @@ html {
 	outline-color: green;
 	color: green;
 }
+
+code {
+	background: #fbeffb;
+	border: 1px solid #ffddff;
+	border-radius: 2px;
+	padding: 2px;
+}
+
+blockquote {
+	background: #f7f7f7;
+	margin: 0;
+	padding: 5px;
+}
