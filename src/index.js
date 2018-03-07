@@ -8,6 +8,7 @@ let ColorHash = require("color-hash/lib/color-hash.js");
 let colorhash = new ColorHash({ lightness: 0.5 });
 let app = choo();
 let storedName = localStorage.getItem("name");
+let bip39 = require("bip39");
 app.use(countStore);
 app.use(setupChat);
 app.route("/", loginView);
@@ -135,9 +136,13 @@ function loginView(state, emit) {
 
     function onclick(e) {
         e.preventDefault();
-        let key = new Buffer(32);
-        window.crypto.getRandomValues(key);
-        emit("pushState", `#${key.toString("hex")}`);
+        emit(
+            "pushState",
+            `#${bip39
+                .generateMnemonic()
+                .split(" ")
+                .join("-")}`
+        );
     }
 
     function onsubmit(e) {

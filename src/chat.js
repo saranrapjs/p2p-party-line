@@ -7,7 +7,7 @@ let sodium = require("sodium-universal");
 
 function generateKey(input) {
   var digest = new Buffer(32);
-  sodium.crypto_generichash(digest, input);
+  sodium.crypto_generichash(digest, new Buffer(input));
   return digest.toString("hex");
 }
 
@@ -29,12 +29,12 @@ class Chat extends EventEmitter {
     this.peers = {};
   }
 
-  start() {
+  start(opts = {}) {
     this.log.createReadStream({ live: true }).on("data", row => {
       this.emit("say", row);
     });
     let hub = signalhub(generateKey(this.channelName), this.hubs);
-    this.swarm = wswarm(hub);
+    this.swarm = wswarm(hub, opts);
     this.onswarm = (peer, id) => {
       this.peers[id] = peer;
       this.emit("peer", id);

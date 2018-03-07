@@ -11,6 +11,7 @@
   "license": "ISC",
   "repository": "https://github.com/saranrapjs/p2p-party-line",
   "dependencies": {
+    "bip39": "^2.5.0",
     "browserify": "^16.1.0",
     "choo": "^6.8.0",
     "color-hash": "^1.0.3",
@@ -21,6 +22,7 @@
     "sodium-universal": "^2.0.0",
     "subleveldown": "^2.1.0",
     "watchify": "^3.10.0",
-    "webrtc-swarm": "^2.9.0"
+    "webrtc-swarm": "^2.9.0",
+    "wrtc": "0.0.67"
   }
 }
