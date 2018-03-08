@@ -38,7 +38,9 @@ class Chat extends EventEmitter {
     this.onswarm = (peer, id) => {
       this.peers[id] = peer;
       this.emit("peer", id);
-      peer.pipe(this.log.replicate({ live: true })).pipe(peer);
+      const stream = this.log.replicate({ live: true });
+      stream.on("error", err => console.warn(err));
+      peer.pipe(stream).pipe(peer);
     };
     this.ondisconnect = (peer, id) => {
       delete this.peers[id];
