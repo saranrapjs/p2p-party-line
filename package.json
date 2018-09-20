@@ -14,7 +14,6 @@
     "browserify": "^16.1.0",
     "cabal-core": "^3.0.2",
     "choo": "^6.8.0",
-    "collect-stream": "^1.2.1",
     "color-hash": "^1.0.3",
     "luxon": "^0.5.3",
     "random-access-memory": "^3.0.0",
