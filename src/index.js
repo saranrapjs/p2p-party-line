@@ -8,7 +8,6 @@ let colorhash = new ColorHash({ lightness: 0.5 });
 let app = choo();
 let storedName = localStorage.getItem("name");
 let swarm = require("./swarm");
-let collect = require("collect-stream");
 
 const channel = "p2p-party-line";
 
@@ -50,10 +49,6 @@ function setupChat(state, emitter) {
                 swarm(chat, window.HUBS);
             });
             let rs = chat.messages.read(channel, { limit: 100, lt: "~" });
-            collect(rs, function(err, msgs) {
-                if (err) return;
-                // console.warn("initial messages", msgs);
-            });
             chat.users.events.on("update", (key, msg) => {
                 state.names[key] = msg.value.content.name;
                 emitter.emit("render");
@@ -66,7 +61,7 @@ function setupChat(state, emitter) {
                 emitter.emit("render");
             });
             chat.on("peer-dropped", () => {
-                state.peers === 0 ? 0 : state.peers - 1;
+                state.peers = state.peers === 0 ? 0 : state.peers - 1;
                 emitter.emit("render");
             });
             emitter.on("newmsg", ({ name, message }) => {
