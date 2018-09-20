@@ -1,15 +1,18 @@
 let html = require("choo/html");
-// let devtools = require('choo-devtools')
-let Chat = require("./chat.js");
+let Cabal = require("cabal-core");
 let choo = require("choo");
 let DateTime = require("luxon").DateTime;
-let memdb = require("memdb");
+let ram = require("random-access-memory");
 let ColorHash = require("color-hash/lib/color-hash.js");
 let colorhash = new ColorHash({ lightness: 0.5 });
 let app = choo();
 let storedName = localStorage.getItem("name");
-let bip39 = require("bip39");
-app.use(countStore);
+let swarm = require("./swarm");
+let collect = require("collect-stream");
+
+const channel = "p2p-party-line";
+
+app.use(setupView);
 app.use(setupChat);
 app.route("/", loginView);
 app.route("/*", mainView);
@@ -34,20 +37,55 @@ function setupChat(state, emitter) {
     function onNavigate() {
         let key = state.params && state.params.wildcard;
         if (chat && (!key || !key.length)) {
-            chat.stop();
             chat = null;
             emitter.removeAllListeners("newmsg");
         } else if (!chat && key && key.length) {
-            chat = new Chat(state.nym, memdb(), key, window.HUBS);
-            chat.on("peer", () => emitter.emit("peers", chat.peers));
-            chat.on("disconnect", () => emitter.emit("peers", chat.peers));
-            chat.on("say", row => emitter.emit("say", row));
-            emitter.on("newmsg", msg => {
-                state.name = msg.who;
-                localStorage.setItem("name", msg.who);
-                chat.say(msg);
+            let actualKey = key !== "newchat" ? key : undefined;
+            chat = Cabal(ram, actualKey);
+            window.chat = chat;
+            chat.getLocalKey((err, newKey) => {
+                if (key === "newchat") {
+                    emitter.emit("pushState", `#${newKey}`);
+                }
+                swarm(chat, window.HUBS);
             });
-            chat.start();
+            let rs = chat.messages.read(channel, { limit: 100, lt: "~" });
+            collect(rs, function(err, msgs) {
+                if (err) return;
+                // console.warn("initial messages", msgs);
+            });
+            chat.users.events.on("update", (key, msg) => {
+                state.names[key] = msg.value.content.name;
+                emitter.emit("render");
+            });
+            chat.messages.events.on("message", msg => {
+                emitter.emit("say", msg);
+            });
+            chat.on("peer-added", () => {
+                state.peers += 1;
+                emitter.emit("render");
+            });
+            chat.on("peer-dropped", () => {
+                state.peers === 0 ? 0 : state.peers - 1;
+                emitter.emit("render");
+            });
+            emitter.on("newmsg", ({ name, message }) => {
+                state.name = name;
+                if (chat.username !== name) {
+                    localStorage.setItem("name", name);
+                    chat.publishNick(name);
+                    chat.username = name;
+                }
+                if (message) {
+                    chat.publish({
+                        type: "chat/text",
+                        content: {
+                            text: message,
+                            channel
+                        }
+                    });
+                }
+            });
         }
     }
 }
@@ -82,15 +120,15 @@ function mainView(state, emit) {
     <body onblur=${onblur} onfocus=${onfocus}>
         <div class="chat">
         ${state.lines.map(row => {
-            const m = row.value.message;
+            const name = state.names[row.key] || row.key;
             return html`<div class="line">
                 <span class="time">${DateTime.fromMillis(
-                    row.value.time
+                    row.value.timestamp
                 ).toLocaleString(timeConfig)}</span>
-                <span class="who" style="color:${toColor(m.who)}">${"<" +
-                m.who +
+                <span class="who" style="color:${toColor(name)}">${"<" +
+                name +
                 ">"}</span>
-                ${toHTML(m.message)}
+                ${toHTML(row.value.content.text)}
             </div>`;
         })}
         </div>
@@ -111,7 +149,7 @@ function mainView(state, emit) {
         state.input = "";
         e.preventDefault();
         emit("newmsg", {
-            who: this.elements.name.value,
+            name: this.elements.name.value,
             message: this.elements.text.value
         });
     }
@@ -136,13 +174,7 @@ function loginView(state, emit) {
 
     function onclick(e) {
         e.preventDefault();
-        emit(
-            "pushState",
-            `#${bip39
-                .generateMnemonic()
-                .split(" ")
-                .join("-")}`
-        );
+        emit("pushState", "#newchat");
     }
 
     function onsubmit(e) {
@@ -153,19 +185,19 @@ function loginView(state, emit) {
     }
 }
 
-function countStore(state, emitter) {
+function setupView(state, emitter) {
     state.input = "";
     state.here = true;
     state.peers = 0;
+    state.names = {};
     state.name =
         storedName || `scatman ${Math.floor(Math.random() * (10 - 1) + 1)}`;
     state.lines = [];
-    emitter.on("peers", peers => {
-        state.peers = Object.keys(peers).length;
-        emitter.emit("render");
-    });
     emitter.on("say", function(row) {
         state.lines.push(row);
+        state.lines = state.lines.sort(
+            (a, b) => a.value.timestamp - b.value.timestamp
+        );
         emitter.emit("render");
         let title = windowTitle;
         if (!state.here) {
