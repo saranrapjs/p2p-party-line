@@ -7,7 +7,10 @@ let ColorHash = require("color-hash/lib/color-hash.js");
 let colorhash = new ColorHash({ lightness: 0.5 });
 let app = choo();
 let storedName = localStorage.getItem("name");
-let swarm = require("./swarm");
+let swarmWebrtc = require("./swarm-webrtc");
+let swarmsocket = require("./swarm-websocket");
+
+let swarmFunc = localStorage.getItem("useSockets") ? swarmsocket : swarmWebrtc;
 
 const channel = "p2p-party-line";
 
@@ -46,7 +49,7 @@ function setupChat(state, emitter) {
                 if (key === "newchat") {
                     emitter.emit("pushState", `#${newKey}`);
                 }
-                swarm(chat, window.HUBS);
+                swarmFunc(chat, window.HUBS);
             });
             let rs = chat.messages.read(channel, { limit: 100, lt: "~" });
             chat.users.events.on("update", (key, msg) => {

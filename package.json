@@ -15,11 +15,14 @@
     "cabal-core": "^3.0.2",
     "choo": "^6.8.0",
     "color-hash": "^1.0.3",
+    "express": "^4.16.3",
+    "express-ws": "^4.0.0",
     "luxon": "^0.5.3",
     "random-access-memory": "^3.0.0",
     "signalhub": "^4.9.0",
     "watchify": "^3.11.0",
     "webrtc-swarm": "^2.9.0",
+    "websocket-stream": "^5.1.2",
     "wrtc": "^0.2.0"
   }
 }
