@@ -63,7 +63,7 @@ function toHTML(msg) {
     let el = html`<span class="message"></span>`;
     let replaced = msg.replace(
         /(https?:\/\/[^\s]+)/g,
-        url => `<a href="${url}">${url}</a>`
+        url => `<a href="${url}" target="_blank">${url}</a>`
     );
     replaced = replaced.replace(
         /(`{1,3})([^`]+)(`{1,3})/g,
