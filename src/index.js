@@ -8,9 +8,14 @@ let colorhash = new ColorHash({ lightness: 0.5 });
 let app = choo();
 let storedName = localStorage.getItem("name");
 let swarmWebrtc = require("./swarm-webrtc");
-let swarmsocket = require("./swarm-websocket");
+let simplePeer = require("simple-peer");
 
-let swarmFunc = localStorage.getItem("useSockets") ? swarmsocket : swarmWebrtc;
+let swarmFunc = swarmWebrtc;
+
+let iceServers = simplePeer.config.iceServers;
+if (localStorage.getItem("iceServers")) {
+    iceServers = [JSON.parse(localStorage.getItem("iceServers"))];
+}
 
 const channel = "p2p-party-line";
 
@@ -20,7 +25,6 @@ app.route("/", loginView);
 app.route("/*", mainView);
 app.mount("body");
 setScroll(true);
-
 const windowTitle = "party line chat";
 
 const colorMap = {};
@@ -49,7 +53,11 @@ function setupChat(state, emitter) {
                 if (key === "newchat") {
                     emitter.emit("pushState", `#${newKey}`);
                 }
-                swarmFunc(chat, window.HUBS);
+                swarmFunc(chat, window.HUBS, {
+                    config: {
+                        iceServers
+                    }
+                });
             });
             let rs = chat.messages.read(channel, { limit: 100, lt: "~" });
             chat.users.events.on("update", (key, msg) => {
