@@ -15,7 +15,10 @@ module.exports = function(cabal, hubs = [], swarmOpts = {}) {
 			cabal._addConnection(rKey);
 			let rStream = cabal.replicate();
 			rStream.pipe(peer).pipe(rStream);
-			rStream.on("error", noop);
+			rStream.on("error", err => {
+				console.warn(err);
+				cabal._removeConnection(rKey);
+			});
 			peer.on("error", err => {
 				console.warn(err);
 				cabal._removeConnection(rKey);
