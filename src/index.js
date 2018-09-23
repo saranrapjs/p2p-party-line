@@ -9,7 +9,8 @@ let app = choo();
 let storedName = localStorage.getItem("name");
 let swarmWebrtc = require("./swarm-webrtc");
 let simplePeer = require("simple-peer");
-
+let Input = require("./input");
+let input = new Input();
 let swarmFunc = swarmWebrtc;
 
 let iceServers = simplePeer.config.iceServers;
@@ -143,7 +144,7 @@ function mainView(state, emit) {
                 <span>peers online: ${state.peers}</span>
                 <span>your name: <input class="edit-name" type="text" name="name" placeholder="enter name" value="${state.name}"></span>
             </div>
-            <input onkeydown=${onkeydown} class="entry" placeholder="type here" type="text" name="text" autofocus value=${state.input} />
+            ${input.render({ onkeydown, input: state.input })}
             <button>Enter</button>
         </form>
     </body>
