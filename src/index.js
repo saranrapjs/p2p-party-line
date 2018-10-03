@@ -60,7 +60,6 @@ function setupChat(state, emitter) {
                     }
                 });
             });
-            let rs = chat.messages.read(channel, { limit: 100, lt: "~" });
             chat.users.events.on("update", (key, msg) => {
                 state.names[key] = msg.value.content.name;
                 emitter.emit("render");
@@ -201,6 +200,14 @@ function setupView(state, emitter) {
         storedName || `scatman ${Math.floor(Math.random() * (10 - 1) + 1)}`;
     state.lines = [];
     emitter.on("say", function(row) {
+        let now = new Date().getTime();
+        if (row.value.timestamp > now) {
+            row = Object.assign({}, row, {
+                value: Object.assign({}, row.value, {
+                    timestamp: now
+                })
+            });
+        }
         state.lines.push(row);
         state.lines = state.lines.sort(
             (a, b) => a.value.timestamp - b.value.timestamp

@@ -10,21 +10,37 @@ module.exports = function(cabal, hubs = [], swarmOpts = {}) {
 				uuid: key
 			})
 		);
+		const peers = {};
 		swarm.on("peer", (peer, id) => {
+			peers[id] = true;
 			let rKey = Buffer.from(id, "hex");
+			onConnect(id);
 			cabal._addConnection(rKey);
 			let rStream = cabal.replicate();
 			rStream.pipe(peer).pipe(rStream);
 			rStream.on("error", err => {
 				console.warn(err);
-				cabal._removeConnection(rKey);
+				onDisconnect(id);
 			});
 			peer.on("error", err => {
 				console.warn(err);
-				cabal._removeConnection(rKey);
+				onDisconnect(id);
 			});
-			peer.on("end", () => cabal._removeConnection(rKey));
+			peer.on("end", () => onDisconnect(id));
 		});
+		swarm.on("disconnect", (peer, id) => onDisconnect(id));
+		function onConnect(id) {
+			if (!peers[id]) {
+				peers[id] = true;
+				cabal._addConnection(id);
+			}
+		}
+		function onDisconnect(id) {
+			if (peers[id]) {
+				delete peers[id];
+				cabal._removeConnection(id);
+			}
+		}
 	});
 };
 
